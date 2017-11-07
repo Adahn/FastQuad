@@ -6,25 +6,12 @@ Created on Sun May 21 16:59:17 2017
 """
 
 
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov  9 15:23:31 2016
-
-@author: 3417212
-"""
-
 import numpy as np
 from numpy.linalg import norm
 from numpy.linalg import det, inv
 import matplotlib.pyplot as plt
 import sys
 
-
-
-"""
-on se place sur [-1;1]x[-1;1]
-"""
 
 
 # regular function
@@ -38,10 +25,6 @@ def h(x,y):
 				
 
 	
-
-	
-
-# for a given triangle we will determine recursively smaller triangles in this triangle
 def generate_smaller_triangles(T):
     # T = triangle with points A,B,C
 
@@ -64,7 +47,9 @@ def generate_smaller_triangles(T):
 
 
 def create_triangles_recursively(depth, T):
-    
+    """ create the trinagles in a recursiv manner 
+        getting smaller and smaller towards the singularity
+    """
     
     if depth == 0:
         return [T]
@@ -88,7 +73,7 @@ def create_triangles_recursively(depth, T):
                 newlist_triangles.extend([tria])
 
         
-        return newlist_triangles #list_triangles       
+        return newlist_triangles        
             
 
 
@@ -96,7 +81,7 @@ def create_triangles_recursively(depth, T):
 
 
 def calculateInt(order, t, w, tria1, tria2):
-	
+    """ calculate integral over a triangles """    
      
     a1 = tria1[0]
     b1 = tria1[1]
@@ -106,20 +91,13 @@ def calculateInt(order, t, w, tria1, tria2):
     b2 = tria2[1]
     c2 = tria2[2]
 
-    # calculate integral
     I = 0
     for i, xi in enumerate(t):
         for j, etai in enumerate(t):
-            #print "i =", i, "j =", j, "xi =", xi, "etai =", etai
-            # transformation - M*vector
-            
+
             x = a1 + (1+xi)/2*(b1-a1) + (1-xi)*(1-etai)/4*(c1-a1)
             y = a2 + (1+xi)/2*(b2-a2) + (1-xi)*(1-etai)/4*(c2-a2)
-#            x = a[0] + (1+xi)/2*(b[0]-a[0]) + (1-xi)*(1-etai)/4*(c[0]-a[0])
-#            y = a[1] + (1+xi)/2*(b[1]-a[1]) + (1-xi)*(1-etai)/4*(c[1]-a[1])
 
-            #print "x =", x, " y =", y
-            
             # regular function
             #I = I + w[i]*w[j]*f(x, y)*(1-xi)/8
 			
@@ -130,42 +108,34 @@ def calculateInt(order, t, w, tria1, tria2):
     Jacob_tria1 = (b1[0]-a1[0])*(c1[1]-a1[1]) - (c1[0]-a1[0])*(b1[1]-a1[1])
     Jacob_tria2 = (b2[0]-a2[0])*(c2[1]-a2[1]) - (c2[0]-a2[0])*(b2[1]-a2[1])
 
-    #print "Jacobien: ", Jacob_tria
     I = np.abs(Jacob_tria1)*np.abs(Jacob_tria2)*I
-    #I = det(M)*I
-    #print "I =", I
+
     return I
  
 
 
 
 def calc_Int_Tria(T1, T2, order, depth_tria_rec, t, w):
-    
-    # calculate recursively all triangles
+    """ calculate integral over all triangles """    
+
     listTriangles1 = create_triangles_recursively(depth_tria_rec, T1)
     listTriangles2 = create_triangles_recursively(depth_tria_rec, T2)
-    
     
     # calculate for each triangle integral
     sum_int_trias = 0
     i = 0
     for tria1 in listTriangles1:
         for tria2 in listTriangles2:
-        #print "tria = ", tria
             
-            #CHECK CONDITION
+            # TO DO: CHECK CONDITION
             if (not (any((np.array([-1, -1]) == x).all() for x in tria1))) and (not (any((np.array([-1, -1]) == x).all() for x in tria2))):
                 i = i + 1
-                #print tria1
-                #print tria2
-                #print
+
                 int_tria = calculateInt(order, t, w, tria1, tria2)
         
                 sum_int_trias = sum_int_trias + int_tria
                 
 
-
-    #print "sum_int_trias =", sum_int_trias
     return sum_int_trias
     
     
@@ -173,13 +143,17 @@ def calc_Int_Tria(T1, T2, order, depth_tria_rec, t, w):
     
     
 def calc_error(T1, T2, order, depth_tria_rec, t, w):
-    
+    """ Calculate relativve error of integral approximation 
+        by considering two consequent depth for the recursive
+        triangle creation
+    """
+
     I = calc_Int_Tria(T1, T2, order, depth_tria_rec, t, w)    
     I2 = calc_Int_Tria(T1, T2, order, depth_tria_rec + 1, t, w) 
-    print "I =", I
-    print "I2 =", I2
+    print("I =", I)
+    print("I2 =", I2)
     err = abs(I - I2)/abs(I)
-    #print "err =", err
+
     return err
 
 
@@ -189,7 +163,7 @@ def calc_error(T1, T2, order, depth_tria_rec, t, w):
 
 ###############################################################################
 ###############################################################################
-
+# TESTING
 ###############################################################################
 ###############################################################################
 
@@ -220,13 +194,7 @@ C2 = np.array([-2,-1])
 T1 = [A1,B1,C1]
 T2 = [A2, B2, C2]
 
-#new = create_triangles_recursively(3, T1)
-#print(len(new))
-
-
 order = 4 # ordre for the method gaussLegendre
-
-#numberSubIntervalls = 5
 
 depth_tria_rec = 1 # depth how deep we divise triangles
 
@@ -235,20 +203,12 @@ rangeDepth = range(0, 5)
 t,w = np.polynomial.legendre.leggauss(order) # t in [-1,1], w weight, ordre 50
 
 
-#integr = calc_Int_Tria(T, order, depth_tria_rec, t, w)
-
-#err = calc_error(T1, T2, order, depth_tria_rec, t, w)
-
-
-#plt.figure()
-
 err = np.array([])
 for depth in rangeDepth:
 	
      
 	err = np.append( err, calc_error(T1, T2, order, depth, t, w))
 	
-#print "coucou", calculateInt(int1, int2, order, t, w)	
 plt.plot(rangeDepth, np.log(err))
 plt.title("Singular case")
 plt.ylabel("log(error)")

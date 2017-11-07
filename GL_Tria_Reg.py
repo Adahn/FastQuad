@@ -3,7 +3,9 @@
 """
 Created on Wed Nov  9 15:23:31 2016
 
-@author: 3417212
+@author: Adrian Ahne
+
+Calculates integral over a triangle for a regular function
 """
 
 import numpy as np
@@ -12,11 +14,6 @@ from numpy.linalg import det, inv
 import matplotlib.pyplot as plt
 import sys
 import time
-
-
-"""
-on se place sur [-1;1]x[-1;1]
-"""
 
 
 # regular function
@@ -31,11 +28,11 @@ def h(x,y):
 
 	
 
-	
-
-# for a given triangle we will determine recursively smaller triangles in this triangle
 def generate_smaller_triangles(T):
-    # T = triangle with points A,B,C
+    """ T = triangle with points A,B,C 
+        for a given triangle we will determine recursively 
+        smaller triangles in this triangle
+    """
 
     A = T[0]
     B = T[1]
@@ -56,7 +53,9 @@ def generate_smaller_triangles(T):
 
 
 def create_triangles_recursively(depth, T):
-    
+    """ create the trinagles in a recursiv manner 
+        getting smaller and smaller towards the singularity
+    """
     
     if depth == 0:
         return [T]
@@ -76,31 +75,13 @@ def create_triangles_recursively(depth, T):
             newlist_triangles.extend(new_triangles)
 
         
-        return newlist_triangles #list_triangles       
-            
-
-
-# transform a arbitrary triangle into the standard triangle
-def transform_triaArbitrary_toStandardTria(T):
-
-    a = T[0]
-    b = T[1]
-    c = T[2]
-    
-    A = np.array([[a[0], b[0], c[0]], [a[1], b[1], c[1]], [1, 1, 1]])
-    
-    E = np.array([[0, 1, 0], [0, 0, 1], [1, 1, 1]])
-
-    # transformation matrix
-    M = np.dot(E, inv(A))
-    
-    return M
-
+        return newlist_triangles     
 
 
 
 def calculateInt(order, t, w, tria, case):
-	
+    """ calculate integral over a triangles """    
+
     a = tria[0]
     b = tria[1]
     c = tria[2]
@@ -109,12 +90,9 @@ def calculateInt(order, t, w, tria, case):
     I = 0
     for i, xi in enumerate(t):
         for j, etai in enumerate(t):
-            #print "i =", i, "j =", j, "xi =", xi, "etai =", etai
-            # transformation - M*vector
-            
+
             x = a[0] + (1+xi)/2*(b[0]-a[0]) + (1-xi)*(1-etai)/4*(c[0]-a[0])
             y = a[1] + (1+xi)/2*(b[1]-a[1]) + (1-xi)*(1-etai)/4*(c[1]-a[1])
-            #print "x =", x, " y =", y
             
             # regular function
             if case == "regular":
@@ -125,35 +103,29 @@ def calculateInt(order, t, w, tria, case):
                 I = I + w[i]*w[j]*h(x, y)*(1-xi)/8
 
             else:
-                print "error: ", case
+                print("error: ", case)
 
-    #print "I before = ", I
     Jacob_tria = (b[0]-a[0])*(c[1]-a[1]) - (c[0]-a[0])*(b[1]-a[1])
-    #print "Jacobien: ", Jacob_tria
     I = np.abs(Jacob_tria)*I
-    #I = det(M)*I
-    #print "I =", I
+
     return I
  
 
 
 
 def calc_Int_Tria(T, order, depth_tria_rec, t, w, case):
-    
+    """ calculate integral over all triangles """    
+
     # calculate recursively all triangles
     listTriangles = create_triangles_recursively(depth_tria_rec, T)
     
     # calculate for each triangle integral
     sum_int_trias = 0
     for tria in listTriangles:
-        #print "tria = ", tria
-
-
         int_tria = calculateInt(order, t, w, tria, case)
         
         sum_int_trias = sum_int_trias + int_tria
 
-    #print "sum_int_trias =", sum_int_trias
     return sum_int_trias
     
     
@@ -161,14 +133,17 @@ def calc_Int_Tria(T, order, depth_tria_rec, t, w, case):
     
     
 def calc_error(T, order, depth_tria_rec, t, w, case):
-    
+    """ Calculate relativve error of integral approximation 
+        by considering two consequent depth for the recursive
+        triangle creation
+    """
+
     I = calc_Int_Tria(T, order, depth_tria_rec, t, w, case)    
     I2 = calc_Int_Tria(T, order, depth_tria_rec + 1, t, w, case) 
-    print case    
-    print "I =", I
-    print "I2 =", I2
+    print("I =", I)
+    print("I2 =", I2)
     err = abs(I - I2)/abs(I)
-    # "err =", err
+
     return err
 
 
@@ -178,7 +153,7 @@ def calc_error(T, order, depth_tria_rec, t, w, case):
 
 ###############################################################################
 ###############################################################################
-
+# TESTING
 ###############################################################################
 ###############################################################################
 
@@ -195,12 +170,7 @@ C=np.array([0,2])
 
 T = [A,B,C]
 
-#new = create_triangles_recursively(3, T)
-
-
 order = 4 # ordre for the method gaussLegendre
-
-#numberSubIntervalls = 5
 
 depth_tria_rec = 1 # depth how deep we divise triangles
 
@@ -208,11 +178,6 @@ rangeDepth = range(0,6)
 
 t,w = np.polynomial.legendre.leggauss(order) # t in [-1,1], w weight, ordre 50
 
-
-#integr = calc_Int_Tria(T, order, depth_tria_rec, t, w)
-
-#err = calc_error(T, order, depth_tria_rec, t, w)
-#temps=np.array([])
 
 errReg = np.array([])
 for depth in rangeDepth:
@@ -225,8 +190,6 @@ for depth in rangeDepth:
 
 errSing = np.array([])
 for depth in rangeDepth:
-	
-  #debut=time.time()
   errSing = np.append( errSing, calc_error(T, order, depth, t, w, "singular"))
 
 
